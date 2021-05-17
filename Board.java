@@ -2,6 +2,7 @@ import java.util.*;
 
 public class Board {
     private String[][] board;
+
     private Hashtable<String, Boolean> visibleSet = new Hashtable<String, Boolean>();
 
 
@@ -9,34 +10,38 @@ public class Board {
     private Scanner keys = new Scanner(System.in);
 
     int dimension;
-    String defaultValue;
+    String defaultValue, hiddenValue;
 
 
     // <------Example main method code------->
 
     
-    public static void main(String[] args) {
-        Board board = new Board(8, "m", false);
-        board.printBoard();        
-    }
+    // public static void main(String[] args) {
+    //     Board board = new Board(10, "x", " ", false);
+    //     board.printBoard(); 
+    //     board.changeVisibility("A3", true);   
+    //     board.printBoard(); 
+    
+    // }
 
     
 
     
 
-    public Board(int dimension, String defaultValue, boolean defaultVisibility){
+    public Board(int dimension, String defaultValue, String hiddenValue, boolean isDefaultVisible){
         if(dimension < 1){
             dimension = 1;
         }
         this.dimension = dimension;
         this.defaultValue = defaultValue;
+        this.hiddenValue = hiddenValue;
         board = new String[dimension + 2][dimension + 2];
         for(int i = 0; i < dimension + 2; i++){
             for(int j = 0; j < dimension + 2; j++){
                 board[i][j] = defaultValue;
             }
         }
-        setVisibleSet(defaultVisibility);
+        setVisibleSet(isDefaultVisible);
     }
 
 
@@ -47,6 +52,8 @@ public class Board {
 
     public void changeVisibility(String pos, boolean visibility){
         visibleSet.put(pos, visibility);
+        // System.out.print("visi changed");
+
     }
 
 
@@ -58,8 +65,26 @@ public class Board {
         }
     }
 
-    public String iterateTiles(int x){
-        return "" + ((char) (65 + x % dimension)) + ((x / dimension) + 1);
+    public void uncoverTilesAroundAll(String value){
+        boolean tileChanged = true;
+        String currentPos;
+        while(tileChanged){
+            tileChanged = false;
+            for(int i = 0; i < dimension * dimension; i++){
+                currentPos = "" + ((char) (65 + i % dimension)) + ((i / dimension) + 1);
+                if(isPosVisible(currentPos) && getTile(currentPos) == value && (!isPosVisible(getPosNorth(currentPos, 1)) || !isPosVisible(getPosSouth(currentPos, 1)) || !isPosVisible(getPosEast(currentPos, 1)) || !isPosVisible(getPosWest(currentPos, 1)) || !isPosVisible(getPosNW(currentPos)) || !isPosVisible(getPosNE(currentPos)) || !isPosVisible(getPosSW(currentPos)) || !isPosVisible(getPosSE(currentPos)))){
+                    changeVisibility(getPosNorth(currentPos, 1), true);
+                    changeVisibility(getPosSE(currentPos), true);
+                    changeVisibility(getPosSW(currentPos), true);
+                    changeVisibility(getPosNE(currentPos), true);
+                    changeVisibility(getPosNW(currentPos), true);
+                    changeVisibility(getPosWest(currentPos, 1), true);
+                    changeVisibility(getPosEast(currentPos, 1), true);
+                    changeVisibility(getPosSouth(currentPos, 1), true);
+                    tileChanged = true;
+                }
+            }
+        }
     }
 
     public void printBoard(){
@@ -87,7 +112,14 @@ public class Board {
 
             //prints out elements
             for(int boardColumn = 1; boardColumn <= dimension; boardColumn++){
-                System.out.print(board[boardRow][boardColumn] + " | ");
+                if(visibleSet.get(getPos(boardRow, boardColumn))){  //if the tile is visible
+                    System.out.print(board[boardRow][boardColumn] + " | ");
+                    // System.out.print("true");
+
+                } else if (!visibleSet.get(getPos(boardRow, boardColumn))){ //if the tile is not visible
+                    System.out.print(hiddenValue + " | ");
+                    // System.out.print("false");
+                }
             }
             System.out.print("\n");
         }
